@@ -5,7 +5,8 @@ function [m_code, c_code] = cse(r, tmp_name, ncse)
 % Common subexpression elimination (CSE) - extracts repeated expressions as temporary variables
 % Input: 
 %        r = symbolic expression(s)
-%        tmp_name = prefix for temp vars, ncse = max iterations
+%        tmp_name = prefix for temp vars, optional, default: 'tmp'
+%        ncse = max iterations, optional, default: 10
 % Output: 
 %        m_code = MATLAB code string with all assignments
 %        c_code = C code string equivalent

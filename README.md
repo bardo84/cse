@@ -1,4 +1,4 @@
-# `cse.m` – Common Subexpression Elimination
+# `cse` – Common Subexpression Elimination
 
 ```matlab
 function [m_code, c_code] = cse(r, tmp_name, ncse)

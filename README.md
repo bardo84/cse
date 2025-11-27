@@ -12,7 +12,7 @@ function [m_code, c_code] = cse(r, tmp_name, ncse)
 %        c_code = C code string equivalent
 ```
 
-Common subexpression elimination (CSE) for symbolic expressions.  
+Common subexpression elimination (CSE) for expressions.  
 Repeated subexpressions are extracted and replaced by temporary variables.  
 Generates executable code in both MATLAB and C formats.
 

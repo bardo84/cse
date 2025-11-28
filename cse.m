@@ -59,7 +59,7 @@ for k = 1:length(symvars)
     pwr_name = sprintf('%s_%d', char(base), pwr);
     % Use lower power if available, otherwise compute from base
     if pwr == 2
-      power_expr = base^2;
+      power_expr = base * base;  % a*a instead of a^2 for efficiency
     else
       prev_pwr_name = sprintf('%s_%d', char(base), pwr-1);
       power_expr = sym(prev_pwr_name) * base;  % a_3 = a_2 * a

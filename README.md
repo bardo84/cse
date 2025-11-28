@@ -13,8 +13,8 @@ function [m_code, c_code] = cse(r, tmp_name, ncse)
 ```
 
 Common subexpression elimination (CSE) for symbolic expressions.  
-Automatically extracts repeated subexpressions and powers of variables as temporary variables.
-Handles complex numbers and type inference.
+Automatically extracts repeated subexpressions and powers of variables as temporary variables. 
+Handles complex numbers and type inference. 
 Generates executable, type-correct code in both MATLAB and C (C99) formats.
 
 ## Syntax

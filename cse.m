@@ -16,7 +16,7 @@ if nargin < 3, ncse = 10; end
 if nargin == 0
   format compact
   expr = str2sym('a*x^3 + b*x^2 + c*x + d == 0');
-  disp('--- Expression:')
+  disp('--- Expression: (scroll to the right to see all')
   r = solve(expr, sym('x'), 'MaxDegree', 3)
   disp('--- With CSE (MATLAB):')
   [m_code, c_code] = cse(r, 'tmp', 4);

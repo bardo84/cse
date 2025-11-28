@@ -50,7 +50,7 @@ Run with no arguments to generate MATLAB and C code for the solution of a cubic 
 
 ```matlab
 >> [m_code, c_code] = cse
---- Expression (scroll to the right to see all):
+--- Expression: (scroll to the right to see all
 r =
                                                                                                                                                                                                                                                                                                                          (((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3) - b/(3*a) - (- b^2/(9*a^2) + c/(3*a))/(((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3)
 (- b^2/(9*a^2) + c/(3*a))/(2*(((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3)) - (3^(1/2)*((- b^2/(9*a^2) + c/(3*a))/(((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3) + (((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3))*1i)/2 - b/(3*a) - (((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3)/2
@@ -70,7 +70,6 @@ double tmp2 = (c/(3*a) - pow(b,2/(9*pow(a,2))/tmp1;
 double tmp3 = -b/(3*a);
 double tmp4 = (pow(3,(1/2)*(tmp1 + tmp2)*1I)/2;
 double r[3] = {[tmp1 - tmp2 + tmp3; tmp2/2 - tmp1/2 + tmp3 - tmp4; tmp2/2 - tmp1/2 + tmp3 + tmp4]};
-
 m_code = 
     "tmp1 = (((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (c/(3*a) - b^2/(9*a^2))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3);
      tmp2 = (c/(3*a) - b^2/(9*a^2))/tmp1;
@@ -80,13 +79,13 @@ m_code =
                 tmp1 - tmp2 + tmp3; ...
      tmp2/2 - tmp1/2 + tmp3 - tmp4; ...
      tmp2/2 - tmp1/2 + tmp3 + tmp4];"
-
 c_code = 
     "double tmp1 = (((d/(2*a) + pow(b,3/(27*pow(a,3) - (b*c)/(6*pow(a,2))pow2 + (c/(3*a) - pow(b,2/(9*pow(a,2))pow3)pow(1/2) - pow(b,3/(27*pow(a,3) - d/(2*a) + (b*c)/(6*pow(a,2))pow(1/3);
      double tmp2 = (c/(3*a) - pow(b,2/(9*pow(a,2))/tmp1;
      double tmp3 = -b/(3*a);
      double tmp4 = (pow(3,(1/2)*(tmp1 + tmp2)*1I)/2;
      double r[3] = {[tmp1 - tmp2 + tmp3; tmp2/2 - tmp1/2 + tmp3 - tmp4; tmp2/2 - tmp1/2 + tmp3 + tmp4]};"
+>> 
 ```
 
 Both `m_code` and `c_code` are returned as strings containing the complete, executable code.

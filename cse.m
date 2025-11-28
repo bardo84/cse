@@ -12,12 +12,12 @@ function [m_code, c_code] = cse(r, tmp_name, ncse)
 if nargin < 2, tmp_name = 'tmp'; end
 if nargin < 3, ncse = 10; end
 
-% Demo mode: solve cubic equation and extract common subexpressions
+% Demo mode: solve a cubic equation and extract common subexpressions
 if nargin == 0
   format compact
   expr = str2sym('a*x^3 + b*x^2 + c*x + d == 0');
   disp('--- Expression:')
-  r = solve(expr, sym('x'), 'MaxDegree', 3);
+  r = solve(expr, sym('x'), 'MaxDegree', 3)
   disp('--- With CSE (MATLAB):')
   [m_code, c_code] = cse(r, 'tmp', 4);
   disp(m_code)

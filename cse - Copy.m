@@ -42,36 +42,6 @@ defs = struct();
 m_lines = string([]);
 c_lines = string([]);
 
-% Extract powers of symbolic variables FIRST (before CSE loop)
-symvars = symvar(r);
-for k = 1:length(symvars)
-  base = symvars(k);
-  % Find maximum power by checking which powers appear
-  max_pwr = 1;
-  dummy = sym('__dummy__');  % Unique symbol to avoid division by zero
-  for pwr = 2:10
-    if ~isequal(r, subs(r, base^pwr, dummy))
-      max_pwr = pwr;
-    end
-  end
-  % Extract each power from 2 to max_pwr
-  for pwr = 2:max_pwr
-    pwr_name = sprintf('%s_%d', char(base), pwr);
-    % Use lower power if available, otherwise compute from base
-    if pwr == 2
-      power_expr = base^2;
-    else
-      prev_pwr_name = sprintf('%s_%d', char(base), pwr-1);
-      power_expr = sym(prev_pwr_name) * base;  % a_3 = a_2 * a
-    end
-    m_lines(end+1) = sprintf('%s = %s;', pwr_name, char(power_expr));
-    [c_type, c_expr] = analyzeCCode(ccode(power_expr));
-    c_lines(end+1) = sprintf("%s %s = %s;", c_type, pwr_name, c_expr);
-    r = subs(r, base^pwr, sym(pwr_name));
-    defs.(pwr_name) = power_expr;
-  end
-end
-
 % Iteratively extract common subexpressions
 for i = 1:ncse
   sstr = sprintf('%s%d', tmp_name, i);
@@ -81,8 +51,10 @@ for i = 1:ncse
   % Format MATLAB and C assignments
   sigma_str = char(sigma);
   m_lines(end+1) = sprintf('%s = %s;', sstr, sigma_str);
-  [c_type, c_expr] = analyzeCCode(ccode(sigma));
-  c_lines(end+1) = sprintf("%s %s = %s;", c_type, sstr, c_expr);
+  c_expr = ccode(sigma);
+  c_expr = regexprep(c_expr, '^\s*\w+\s*=\s*', '');  % Remove "t0 = "
+  c_expr = regexprep(c_expr, ';+\s*$', '');           % Remove trailing semicolons
+  c_lines(end+1) = sprintf("double %s = %s;", sstr, c_expr);
   
   defs.(sstr) = sigma;  % Store definition
   r = r_new;  % Update expression with substitution
@@ -92,16 +64,8 @@ end
 vname = inputname(1); 
 if isempty(vname), vname = 'r'; end
 
-% Determine result array type based on whether any temp is complex
-is_complex = any(contains(c_lines, 'double _Complex'));
-if is_complex
-  result_c_type = 'double _Complex';
-else
-  result_c_type = 'double';
-end
-
 % Format final result assignment
-[m_assign, c_assign] = formatAssignment(r, vname, result_c_type);
+[m_assign, c_assign] = formatAssignment(r, vname);
 m_lines(end+1) = m_assign;
 c_lines(end+1) = c_assign;
 
@@ -112,24 +76,9 @@ c_code = strjoin(c_lines, newline);
 end
 
 
-function [c_type, c_expr] = analyzeCCode(c_expr)
-% Analyze C expression: determine type (double or double _Complex), clean expression
-c_expr = regexprep(c_expr, '^\s*\w+\s*=\s*', '');  % Remove "t0 = "
-c_expr = regexprep(c_expr, ';+\s*$', '');           % Remove trailing semicolons
-c_expr = regexprep(c_expr, '(\d+\.?\d*)\*?i\b', '$1*I');  % Convert 2i to 2*I
-
-% Check if expression contains imaginary unit
-if contains(c_expr, '*I') || contains(c_expr, 'sqrt(-1')
-    c_type = 'double _Complex';
-else
-    c_type = 'double';
-end
-end
-
-
-function [m_assign, c_assign] = formatAssignment(A, vname, result_c_type)
+function [m_assign, c_assign] = formatAssignment(A, vname)
 % Format assignment statement for MATLAB and C
-% Input: A = symbolic matrix/value, vname = variable name, result_c_type = 'double' or 'double _Complex'
+% Input: A = symbolic matrix/value, vname = variable name
 % Output: m_assign = MATLAB assignment, c_assign = C assignment
 
 nl = newline;
@@ -152,15 +101,19 @@ end
 if max(nr, nc) > 1
     % Matrix/vector: generate indexed assignments
     c_lines = string([]);
-    c_lines(end+1) = sprintf("%s %s[%d];", result_c_type, vname, max(nr, nc));
+    c_lines(end+1) = sprintf("double %s[%d];", vname, max(nr, nc));
     for j = 1:max(nr, nc)
-        [~, c_expr] = analyzeCCode(ccode(A(j)));
+        c_expr = ccode(A(j));
+        c_expr = regexprep(c_expr, '^\s*\w+\s*=\s*', '');
+        c_expr = regexprep(c_expr, ';+\s*$', '');
         c_lines(end+1) = sprintf("%s[%d] = %s;", vname, j-1, c_expr);
     end
     c_assign = strjoin(c_lines, newline);
 else
     % Scalar
-    [c_type, c_expr] = analyzeCCode(ccode(A));
-    c_assign = sprintf("%s %s = %s;", c_type, vname, c_expr);
+    c_expr = ccode(A);
+    c_expr = regexprep(c_expr, '^\s*\w+\s*=\s*', '');
+    c_expr = regexprep(c_expr, ';+\s*$', '');
+    c_assign = sprintf("double %s = %s;", vname, c_expr);
 end
 end

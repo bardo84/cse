@@ -59,12 +59,14 @@ for k = 1:length(symvars)
     pwr_name = sprintf('%s_%d', char(base), pwr);
     % Use lower power if available, otherwise compute from base
     if pwr == 2
-      power_expr = base * base;  % a*a instead of a^2 for efficiency
+      power_expr = base * base;
+      m_expr_str = sprintf('%s*%s', char(base), char(base));  % Format as a*a
     else
       prev_pwr_name = sprintf('%s_%d', char(base), pwr-1);
-      power_expr = sym(prev_pwr_name) * base;  % a_3 = a_2 * a
+      power_expr = sym(prev_pwr_name) * base;
+      m_expr_str = sprintf('%s*%s', prev_pwr_name, char(base));  % Format as a_2*a
     end
-    m_lines(end+1) = sprintf('%s = %s;', pwr_name, char(power_expr));
+    m_lines(end+1) = sprintf('%s = %s;', pwr_name, m_expr_str);
     [c_type, c_expr] = analyzeCCode(ccode(power_expr));
     c_lines(end+1) = sprintf("%s %s = %s;", c_type, pwr_name, c_expr);
     r = subs(r, base^pwr, sym(pwr_name));

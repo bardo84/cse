@@ -1,97 +1,115 @@
-# `cse` – Common Subexpression Elimination
+# Common Subexpression Elimination and C Code Generation
+
+This repository provides a small MATLAB utility for performing common subexpression elimination (CSE) on symbolic expressions and emitting equivalent MATLAB and C code.
+
+## Files
+
+- `cse.m`  
+  Core function. Takes a symbolic expression (scalar, vector, or matrix) and returns:
+  - MATLAB code with factored powers and extracted common subexpressions
+  - C code using `double` / `double _Complex`
+
+- `cse_print.m`  
+  Convenience wrapper around `cse` that prints MATLAB and C code for quick inspection.
+
+- `test_cse.m`  
+  Simple smoke tests covering scalars, vectors, matrices, complex expressions, and cell input.
+
+## Requirements
+
+- MATLAB
+- Symbolic Math Toolbox
+
+Tested with recent MATLAB versions, but the code is mostly standard Symbolic Toolbox API.
+
+## Usage
+
+### Basic
 
 ```matlab
-function [m_code, c_code] = cse(r, tmp_name, ncse)
-% Common subexpression elimination (CSE) - extracts repeated expressions as temporary variables
-% Input: 
-%        r = symbolic expression(s)
-%        tmp_name = prefix for temp vars, optional, default: 'tmp'
-%        ncse = max iterations, optional, default: 10
-% Output: 
-%        m_code = MATLAB code string with all assignments
-%        c_code = C code string equivalent
+syms a b c x
+expr = a*x^2 + b*x^2 + c;
+
+[m_code, c_code] = cse(expr);
+
+disp(m_code);
+disp(c_code);
 ```
 
-Common subexpression elimination (CSE) for symbolic expressions.  
-Automatically extracts repeated subexpressions and powers of variables as temporary variables. 
-Handles complex numbers and type inference. 
-Generates executable, type-correct code in both MATLAB and C (C99) formats.
-
-## Syntax
+### Using `cse_print`
 
 ```matlab
-[m_code, c_code] = cse(r, tmp_name, ncse)
+syms a b c x
+expr = a*x^2 + b*x^2 + c;
+
+cse_print(expr);
 ```
 
-## Inputs
-
-- `r`  
-  Symbolic expression or array of symbolic expressions to be simplified.
-
-- `tmp_name`  
-  String prefix used for naming temporary variables (e.g. `"tmp"` → `tmp1`, `tmp2`, …).  
-  Default: `'tmp'`
-
-- `ncse`  
-  Maximum number of CSE iterations to perform.  
-  Default: `10`
-
-## Outputs
-
-- `m_code`  
-  String containing executable MATLAB code with all temporary variable assignments  
-  and final result assignment in proper format.
-
-- `c_code`  
-  String containing equivalent C99 code with type declarations and array syntax.
-
-## Features
-
-- **Common subexpression elimination**: Detects and extracts repeated subexpressions
-- **Power extraction**: Automatically factors out repeated powers (e.g., `a^2`, `a^3`) with efficient chaining (`a_3 = a_2 * a`)
-- **Complex number handling**: Detects imaginary content and declares variables as `double _Complex` when needed
-- **Type inference**: Propagates complex types—if any temporary is complex, result arrays are also complex
-- **Proper C syntax**: Converts MATLAB operators and functions to C equivalents (e.g., `^` → `pow()`, `1i` → `1*I`)
-- **Array indexing**: Generates 0-based indexed array assignments for C
-
-## Example
-
-Run a demo with no arguments to generate MATLAB and C code for the solution of a cubic equation:
+Example output:
 
 ```matlab
->> [m_code, c_code] = cse;
---- Expression: (scroll to the right to see all)
-r =
-                                                                                                                                                                                                                                                                                                                         (((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3) - b/(3*a) - (- b^2/(9*a^2) + c/(3*a))/(((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3)
-(- b^2/(9*a^2) + c/(3*a))/(2*(((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3)) - (3^(1/2)*((- b^2/(9*a^2) + c/(3*a))/(((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3) + (((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3))*1i)/2 - b/(3*a) - (((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3)/2
-(- b^2/(9*a^2) + c/(3*a))/(2*(((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3)) + (3^(1/2)*((- b^2/(9*a^2) + c/(3*a))/(((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3) + (((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3))*1i)/2 - b/(3*a) - (((d/(2*a) + b^3/(27*a^3) - (b*c)/(6*a^2))^2 + (- b^2/(9*a^2) + c/(3*a))^3)^(1/2) - b^3/(27*a^3) - d/(2*a) + (b*c)/(6*a^2))^(1/3)/2
---- With CSE (MATLAB):
-a_2 = a*a;
-a_3 = a_2*a;
-b_2 = b*b;
-b_3 = b_2*b;
-tmp1 = (((b_3/(27*a_3) + d/(2*a) - (b*c)/(6*a_2))^2 - (b_2/(9*a_2) - c/(3*a))^3)^(1/2) - d/(2*a) - b_3/(27*a_3) + (b*c)/(6*a_2))^(1/3);
-tmp2 = -(b_2/(9*a_2) - c/(3*a))/tmp1;
-tmp3 = -b/(3*a);
-tmp4 = (3^(1/2)*(tmp1 + tmp2)*1i)/2;
-r = [ ... 
-tmp1 + tmp3 + (b_2/(9*a_2) - c/(3*a))/tmp1; ...
-             tmp2/2 - tmp1/2 + tmp3 - tmp4; ...
-             tmp2/2 - tmp1/2 + tmp3 + tmp4];
---- With CSE (C):
-double a_2 = a*a;
-double a_3 = a*a_2;
-double b_2 = b*b;
-double b_3 = b*b_2;
-double tmp1 = pow((b_3*(-1.0/2.7E+1))/a_3-d/(a*2.0)+sqrt(pow(b_3/(a_3*2.7E+1)+d/(a*2.0)-(b*c)/(a_2*6.0),2.0)-pow(b_2/(a_2*9.0)-c/(a*3.0),3.0))+(b*c)/(a_2*6.0),1.0/3.0);
-double tmp2 = -(b_2/(a_2*9.0)-c/(a*3.0))/tmp1;
-double tmp3 = (b*(-1.0/3.0))/a;
-double _Complex tmp4 = sqrt(3.0)*(tmp1+tmp2)*5.0E-1*sqrt(-1.0);
-double _Complex r[3];
-r[0] = tmp1+tmp3+(b_2/(a_2*9.0)-c/(a*3.0))/tmp1;
-r[1] = tmp1*(-1.0/2.0)+tmp2/2.0+tmp3-tmp4;
-r[2] = tmp1*(-1.0/2.0)+tmp2/2.0+tmp3+tmp4;
->> 
+--- MATLAB code ---
+x_2 = x*x;
+expr = c + x_2*(a + b);
 ```
 
-Both `m_code` and `c_code` are returned as strings containing complete, executable code ready to be used or further integrated into larger applications.
+```c
+--- C code ---
+double x_2 = x*x;
+double expr = c+x_2*(a+b);
+```
+
+### Vectors and matrices
+
+```matlab
+syms a b c x
+A = [a*x, b; c, b + a*x];
+
+cse_print(A);
+```
+
+Example output (MATLAB):
+
+```matlab
+tmp1 = a*x;
+A = [ ...
+  tmp1, b; ...
+  c, b + tmp1
+];
+```
+
+### Function signature
+
+```matlab
+[m_code, c_code] = cse(r, tmp_name, ncse, max_power)
+```
+
+- `r`           – symbolic expression, vector/matrix, string, or cell of strings
+- `tmp_name`    – prefix for temporaries (default: `'tmp'`)
+- `ncse`        – max number of CSE iterations (default: `10`)
+- `max_power`   – max power to extract as a separate temp (default: `10`)
+
+Output:
+
+- `m_code` – MATLAB code as a single string with newlines
+- `c_code` – C code as a single string with newlines
+
+## Code generation details
+
+- A preprocessing step applies `simplify(collect(r))` to expose algebraic structure for CSE.
+- Powers of symbols (`x^2`, `a^3`, etc.) are optionally extracted into temps (`x_2`, `a_3`, …) up to `max_power`.
+- CSE is done via `subexpr` and only eliminates structurally identical subexpressions.
+- C code:
+  - Uses `double` by default and promotes to `double _Complex` when needed.
+  - Flattens vectors/matrices to 1D arrays using MATLAB’s column-major linear indexing (`A(:)` order).
+
+## Running tests
+
+From MATLAB:
+
+```matlab
+test_cse;
+```
+
+This prints the original symbolic expression and the generated MATLAB and C code for several test cases.
+
